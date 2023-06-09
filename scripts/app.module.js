@@ -1,7 +1,15 @@
+// https://bankofgeorgia.ge/en/currencies
+
 let tl = 0;
 
+// 
+$.getJSON("https://www.floatrates.com/daily/try.json", function(currencies) {
+    // console.log(currencies.gel.rate)
+    tl = currencies.gel.rate;
+});
+
 // get input from popup
-chrome.runtime.onMessage.addListener(
+/*chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
         if(!sender.tab) {
         tl = request.greeting;
@@ -13,7 +21,7 @@ chrome.runtime.onMessage.addListener(
         // if (request.greeting == "hello1")
         //     sendResponse({farewell: "goodbye"});
     }
-});
+});*/
 
 // loop
 setInterval(function(){ currency(); }, 1000);
@@ -37,5 +45,5 @@ function currency() {
         $(detailPriceBox).append('<font class="new-price">(' + (parseInt(price) * tl).toFixed(0) + ' GEL)</font>');
     }
 
-    console.log('done')
+    // console.log('done')
 }
