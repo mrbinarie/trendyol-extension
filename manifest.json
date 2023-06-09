@@ -1,0 +1,18 @@
+{
+    "manifest_version": 3,
+
+    "name": "Trendyol Extension",
+    "description": "Trendyol Extension for Georgians",
+    "version": "1.0",
+    "action": {
+        "default_popup": "index.html",
+        "default_icon": "favicon.png"
+    },
+
+    "permissions": ["tabs"],
+    
+    "content_scripts": [{
+        "js": ["scripts/lib/jquery-1.8.2.min.js", "scripts/app.module.js"],
+        "matches": ["https://trendyol.com/*", "https://www.trendyol.com/*"]
+    }]
+}
