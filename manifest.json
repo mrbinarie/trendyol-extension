@@ -6,7 +6,12 @@
     "version": "1.0",
     "action": {
         "_default_popup": "index.html",
-        "default_icon": "favicon.png"
+        "default_icon": "images/favicon.png",
+        "icons": {
+            "16": "images/favicon-16x16.png",
+            "48": "images/favicon-32x32.png",
+            "128": "images/android-chrome-192x192.png"
+        }
     },
 
     "permissions": ["tabs"],
