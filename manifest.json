@@ -5,7 +5,7 @@
     "description": "Trendyol Extension for Georgians",
     "version": "1.0",
     "action": {
-        "_default_popup": "index.html",
+        "default_popup": "index.html",
         "default_icon": "images/favicon.png",
         "icons": {
             "16": "images/favicon-16x16.png",
@@ -14,7 +14,7 @@
         }
     },
 
-    "permissions": ["tabs"],
+    "permissions": ["tabs","storage"],
     
     "content_scripts": [{
         "js": ["scripts/lib/jquery-1.8.2.min.js", "scripts/app.module.js"],
