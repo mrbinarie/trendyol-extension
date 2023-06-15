@@ -2,21 +2,27 @@
 
 let tl = 0;
 
+// get default data
+chrome.storage.local.get(["lari_in_lira"]).then((result) => {
+    tl = result.lari_in_lira;
+});
+
 // get input from popup
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
         if(!sender.tab) {
-        tl = request.value;
-        $('.new-price').remove();
-        currency();
+            tl = request.greeting;
+            $('.new-price').remove();
+            addCurrency();
+        }
     }
-});
+);
 
 // loop
-setInterval(function(){ currency(); }, 1000);
+setInterval(function(){ addCurrency(); }, 1000);
 
 // convert TL to LARI
-function currency() {
+function addCurrency() {
 
     // main page
     let priceBox = $(document).find('.prc-box-dscntd > font > font, .price-box > font > font');

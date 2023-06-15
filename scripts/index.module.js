@@ -10,25 +10,19 @@ if(currency.length == 0) {
 
 $('#btn').on('click', function() {
     sendCurrencyToApp();
-    let lari_in_lira = $('[name="currency"]').val()
-    chrome.storage.local.set({ lari_in_lira: lari_in_lira }).then(() => {
+    let value = $('[name="currency"]').val()
+    chrome.storage.local.set({ lari_in_lira: value }).then(() => {
         console.log("Value is set");
     });
+    window.close();
 });
-
-function chromeTabs(tabs) {
-    chrome.tabs.sendMessage(tabs[0].id, {
-        value: $('[name="currency"]').val()
-    }, function(response) {
-        // alert(response.farewell);
-    });
-}
 
 function sendCurrencyToApp() {
     chrome.tabs.query({active: false, currentWindow: true}, function(tabs) {
-        chromeTabs(tabs);
-    });
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        chromeTabs(tabs);
+        chrome.tabs.sendMessage(tabs[0].id, {
+            greeting: $('[name="currency"]').val()
+        }, function(response) {
+            // alert(response.farewell);
+        });
     });
 }
