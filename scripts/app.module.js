@@ -2,18 +2,11 @@
 
 let tl = 0;
 
-// 
-$.getJSON("https://www.floatrates.com/daily/try.json", function(currencies) {
-    // console.log(currencies.gel.rate)
-    tl = currencies.gel.rate;
-});
-
 // get input from popup
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
         if(!sender.tab) {
-        tl = request.greeting;
-        // console.log(request.greeting)
+        tl = request.value;
         $('.new-price').remove();
         currency();
     }

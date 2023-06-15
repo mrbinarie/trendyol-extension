@@ -6,11 +6,12 @@
     "version": "1.0",
     "action": {
         "default_popup": "index.html",
-        "default_icon": "images/favicon.png",
+        "default_icon": "images/favicon-128x128.png",
         "icons": {
             "16": "images/favicon-16x16.png",
-            "48": "images/favicon-32x32.png",
-            "128": "images/android-chrome-192x192.png"
+            "32": "images/favicon-32x32.png",
+            "48": "images/favicon-48x48.png",
+            "128": "images/favicon-128x128.png"
         }
     },
 

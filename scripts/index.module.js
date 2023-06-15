@@ -2,10 +2,6 @@
 let currency = $('[name="currency"]').val();
 
 if(currency.length == 0) {
-    // $.getJSON("currency.txt", function(currency) {
-    //     $('[name="currency"]').val(currency);
-    //     sendCurrencyToApp();
-    // });
     chrome.storage.local.get(["lari_in_lira"]).then((result) => {
         $('[name="currency"]').val(result.lari_in_lira);
         sendCurrencyToApp();
@@ -22,7 +18,7 @@ $('#btn').on('click', function() {
 
 function chromeTabs(tabs) {
     chrome.tabs.sendMessage(tabs[0].id, {
-        greeting: $('[name="currency"]').val()
+        value: $('[name="currency"]').val()
     }, function(response) {
         // alert(response.farewell);
     });
