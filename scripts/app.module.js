@@ -23,24 +23,26 @@ setInterval(function(){ addCurrency(); }, 1000);
 
 // convert TL to LARI
 function addCurrency() {
-
+console.log('asd')
     // main page
-    let priceBox = $(document).find('.prc-box-dscntd > font > font, .price-box > font > font');
+    let priceBox = $(document).find('.prc-box-dscntd font font, .price-box font font');
     $.each(priceBox, function(key, element) {
         let price = $(element).text().replaceAll(',','');
-        let isPrice = $(element).find('.new-price');
+        let isPrice = $(element).closest('div').find('.new-price');
         if(isPrice.length == 0 && $.isNumeric(price)) {
-            $(element).append('<font class="new-price">(' + (parseInt(price) * tl).toFixed(0) + ' GEL)</font>');
+            $(element).closest('div').append('<font class="new-price"> (' + (parseInt(price) * tl).toFixed(0) + ' GEL)</font>');
         }
     });
 
     // detail page
-    let detailPriceBox = $(document).find('.prc-dsc > font > font');
-    let price = detailPriceBox.text().replaceAll(' TL','');
-    let isPrice = $(detailPriceBox).find('.new-price');
-    if(isPrice.length == 0 && $.isNumeric(price)) {
-        $(detailPriceBox).append('<font class="new-price">(' + (parseInt(price) * tl).toFixed(0) + ' GEL)</font>');
-    }
+    let detailPriceBox = $(document).find('.prc-dsc font font, .pb-summary-total-price font font, .pb-basket-item-price > font font');
+    $.each(detailPriceBox, function(key, element) {
+        let detailPrice = $(element).text().replaceAll(' TL','');
+        let isDetailPrice = $(element).closest('div').find('.new-price');
+        if(isDetailPrice.length == 0 && $.isNumeric(detailPrice)) {
+            $(element).append('<font class="new-price"> (' + (parseInt(detailPrice) * tl).toFixed(0) + ' GEL)</font>');
+        }
+    });
 
     // console.log('done')
 }
