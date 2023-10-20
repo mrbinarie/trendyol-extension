@@ -3,7 +3,7 @@
 
     "name": "Trendyol Extension",
     "description": "Trendyol Extension for Georgians",
-    "version": "1.0",
+    "version": "2.1",
     "action": {
         "default_popup": "index.html",
         "default_icon": "images/favicon-128x128.png",

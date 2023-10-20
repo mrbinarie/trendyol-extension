@@ -42,7 +42,7 @@ class App {
         // detail page
         let detailPriceBox = $(document).find('.prc-dsc font font, .pb-summary-total-price font font, .pb-basket-item-price > font font');
         $.each(detailPriceBox, function(key, element) {
-            let detailPrice = _this.priceConverter( $(element).text() );
+            let detailPrice = _this.priceConverter( $(element).text().replace(' TL', '') );
             let isDetailPrice = $(element).closest('div').find('.new-price');
             if(isDetailPrice.length == 0) {
                 $(element).append('<font class="new-price"> (' + detailPrice + ' GEL)</font>');
@@ -55,7 +55,7 @@ class App {
         let _this =  this;
         const pattern = /[\.,](?=\d{3})/g;
         let toLari = price.replace(pattern, '');
-        
+
         toLari = parseFloat(toLari) * _this.tl;
         return toLari.toFixed(0);
     }
