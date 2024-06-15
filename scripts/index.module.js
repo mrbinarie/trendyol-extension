@@ -8,13 +8,8 @@ if(currency.length == 0) {
     });
 }
 
-$('#btn').on('click', function() {
-    sendCurrencyToApp();
-    let value = $('[name="currency"]').val()
-    chrome.storage.local.set({ lari_in_lira: value }).then(() => {
-        console.log("Value is set");
-    });
-    window.close();
+$('#generate-button').on('click', function() {
+    setCashSell();
 });
 
 function sendCurrencyToApp() {
@@ -24,5 +19,34 @@ function sendCurrencyToApp() {
         }, function(response) {
             // alert(response.farewell);
         });
+    });
+}
+
+function setCashSell() {
+
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const targetUrl = 'https://api.businessonline.ge/api/rates/commercial/try';
+    
+    fetch(proxyUrl + targetUrl, {
+        headers: {
+            'Origin': '*',  // Replace with your actual domain
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // console.log('Success:', data);
+        $('[name="currency"]').val(data.Sell);
+        //
+        sendCurrencyToApp();
+        let value = $('[name="currency"]').val()
+        chrome.storage.local.set({ lari_in_lira: value }).then(() => {
+            console.log("Value is set");
+        });
+        window.close();
+        //
+    })
+    .catch(error => {
+        console.error('Error:', error);
     });
 }
