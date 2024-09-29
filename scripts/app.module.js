@@ -17,25 +17,25 @@ class App {
             function(request, sender, sendResponse) {
                 if(!sender.tab) {
                     _this.tl = request.greeting;
-                    $('.new-price').remove();
+                    $('.converted-price').remove();
                     _this.addCurrency();
                 }
             }
         );
-        
+        console.log('Trendyol Converter Activated...')
         // loop
-        setInterval(function(){ _this.addCurrency(); }, 1000);
+        setInterval(() => _this.addCurrency(), 100);
     }
     addCurrency()
     {
         let _this =  this;
         // main page
-        let priceBox = $(document).find('.prc-box-dscntd font font, .price-box font font');
+        let priceBox = $(document).find('.prc-box-dscntd');
         $.each(priceBox, function(key, element) {
             let price = _this.priceConverter( $(element).text() );
-            let isPrice = $(element).closest('div').find('.new-price');
+            let isPrice = $(element).closest('div').find('.converted-price');
             if(isPrice.length == 0) {
-                $(element).closest('div').append('<font class="new-price"> (' + price + ' GEL)</font>');
+                $(element).closest('div').append('<font class="converted-price"> (' + price + ' GEL)</font>');
             }
         });
     
@@ -43,9 +43,9 @@ class App {
         let detailPriceBox = $(document).find('.prc-dsc font font, .pb-summary-total-price font font, .pb-basket-item-price > font font');
         $.each(detailPriceBox, function(key, element) {
             let detailPrice = _this.priceConverter( $(element).text().replace(' TL', '') );
-            let isDetailPrice = $(element).closest('div').find('.new-price');
+            let isDetailPrice = $(element).closest('div').find('.converted-price');
             if(isDetailPrice.length == 0) {
-                $(element).append('<font class="new-price"> (' + detailPrice + ' GEL)</font>');
+                $(element).append('<font class="converted-price"> (' + detailPrice + ' GEL)</font>');
             }
         });
             // console.log('done')

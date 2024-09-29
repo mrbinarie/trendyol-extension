@@ -4,11 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trendyol Extension</title>
+  <style>
+    .currency-block {
+      padding: 15px;
+    }
+  </style>
 </head>
 <body>
     <strong>1 TRY to GEL:</strong>
-    <input name="currency" placeholder="0.000" readonly>
-    <button id="generate-button">Update TRY to GEL (Sell)</button>
+    <a href="https://bankofgeorgia.ge/en/currencies/GEL-to-USD#commercial-rates" target="_blank">BOG Rate</a>
+    <div class="currency-block">
+      <input name="currency" placeholder="0.000"> <!-- 0.0894 -->
+      <button id="generate-button">Type TRY to GEL (Sell)</button>
+    </div>
     <!-- <button id="btn">Save</button> -->
 
     <script src="scripts/lib/jquery-1.8.2.min.js"></script>
