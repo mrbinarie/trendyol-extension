@@ -24,5 +24,12 @@
     "content_scripts": [{
         "js": ["scripts/lib/jquery-1.8.2.min.js", "scripts/app.module.js"],
         "matches": ["https://trendyol.com/*", "https://www.trendyol.com/*"]
-    }]
+    }],
+
+    "web_accessible_resources": [
+        {
+            "resources": ["lang/english.json"],
+            "matches": ["https://trendyol.com/*", "https://*.trendyol.com/*"]
+        }
+    ]
 }
