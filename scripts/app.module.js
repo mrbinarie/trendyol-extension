@@ -43,12 +43,22 @@ class App {
         });
     
         // detail page
-        let detailPriceBox = $(document).find('.prc-dsc font font, .pb-summary-total-price font font, .pb-basket-item-price > font font');
+        let detailPriceBox = $(document).find('div > span > font font, .new-price');
         $.each(detailPriceBox, function(key, element) {
             let detailPrice = _this.priceConverter( $(element).text().replace(' TL', '') );
             let isDetailPrice = $(element).closest('div').find('.converted-price');
             if(isDetailPrice.length == 0 && !isNaN(detailPrice)) {
                 $(element).append('<font class="converted-price"> (' + detailPrice + ' GEL)</font>');
+            }
+        });
+
+        // favorite page
+        let FavoritePriceBox = $(document).find('.price-wrapper').find('div > font').closest('div');
+        $.each(FavoritePriceBox, function(key, element) {
+            let price = _this.priceConverter( $(element).text() );
+            let isPrice = $(element).find('.converted-price');
+            if(isPrice.length == 0) {
+                $(element).append('<font class="converted-price"> (' + price + ' GEL)</font>');
             }
         });
     
