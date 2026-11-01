@@ -1,263 +1,128 @@
 // https://bankofgeorgia.ge/en/currencies
 
 class App {
-    
     tl = 0;
 
     constructor() {
-
-        let _this =  this;
-        // get default data
+        let _this = this;
         chrome.storage.local.get(["lari_in_lira"]).then((result) => {
             _this.tl = result.lari_in_lira;
+            _this.observePageChanges();
+            _this.addCurrency();
         });
-        
-        // get input from popup
-        chrome.runtime.onMessage.addListener(
-            function(request, sender, sendResponse) {
-                if(!sender.tab) {
-                    _this.tl = request.greeting;
-                    $('.converted-price').remove();
-                    _this.addCurrency();
-                }
+
+        chrome.runtime.onMessage.addListener(function(request, sender) {
+            if(!sender.tab) {
+                _this.tl = request.greeting;
+                $('.converted-price').remove();
+                _this.addCurrency();
             }
-        );
-        console.log('Trendyol Converter Activated...')
-        // loop
-        setInterval(() => _this.addCurrency(), 100);
+        });
 
-        _this.loadTranslatedWords();
-        setInterval(() => _this.CategoriesTranslator(), 100);
-
-        _this.appendTab();
+        console.log('Trendyol Converter Activated...');
     }
-    addCurrency()
-    {
-        let _this =  this;
-        const parentTag = 'div,p,span';
-        let priceBox = $("font:contains('TL'),font:contains('ლირა')");
-        $.each(priceBox, function(key, element) {
-            let getPrice = $(element).closest(parentTag).text();
-            let price = _this.priceConverter( getPrice );
-            let isPrice = $(element).closest(parentTag).find('.converted-price');
-            if(isPrice.length == 0) {
-                $(element).closest(parentTag).append('<font class="converted-price"> (' + price + ' GEL)</font>');
-            }
-        });
 
+    addCurrency(root = document) {
+        let _this = this;
+        const hasCurrency = element => /TL/.test(element.textContent || '');
+        let scanRoot = $(root);
+        let priceBox = scanRoot.find('*').addBack().filter(function() {
+            return hasCurrency(this) && !Array.from(this.children).some(hasCurrency);
+        });
+        $.each(priceBox, function(key, element) {
+            let priceElement = $(element);
+            let price = _this.priceConverter(element.innerText || '');
+            if(price === null) {
+                return;
+            }
+            if(priceElement.find('.converted-price').length === 0) {
+                priceElement.append('<font class="converted-price">(' + price + ' GEL)</font>');
+            }
+
+            priceElement.parents().filter(function() {
+                return priceBox.filter((_, candidate) => this.contains(candidate)).length === 1 &&
+                    $(this).find('.converted-price').length > 1;
+            }).first().each(function() {
+                const seenPrices = new Set();
+                $(this).find('.converted-price').each(function() {
+                    const convertedText = $(this).text().trim();
+                    if(seenPrices.has(convertedText)) {
+                        $(this).remove();
+                    } else {
+                        seenPrices.add(convertedText);
+                    }
+                });
+            });
+        });
     }
 
     priceConverter(price) {
-        let _this =  this;
-        price = price.match(/[\d.,]+/)[0]; // get only numbers
-        const pattern = /[\.,](?=\d{3})/g;
-        let toLari = price.replace(pattern, '');
-
-        toLari = parseFloat(toLari) * _this.tl;
+        let _this = this;
+        const priceMatch = price.match(/\d[\d.,]*/);
+        const exchangeRate = Number(_this.tl);
+        if(!priceMatch || !/TL/.test(price) || !Number.isFinite(exchangeRate) || exchangeRate <= 0) {
+            return null;
+        }
+        let toLari = priceMatch[0].replace(/[\.,](?=\d{3})/g, '');
+        toLari = parseFloat(toLari);
+        if(!Number.isFinite(toLari) || toLari <= 0) {
+            return null;
+        }
+        toLari *= exchangeRate;
         return toLari.toFixed(0);
     }
 
-    loadTranslatedWords() {
-        let _this = this;
-        _this.translatedWords = [];
-        fetch(chrome.runtime.getURL('lang/english.json'))
-            .then((response) => response.json())
-            .then((data) => {
-                _this.translatedWords = data;
-            })
-            .catch((error) => console.error("Error loading JSON:", error));
-    }
+    observePageChanges() {
+        let pendingRoots = new Set();
+        let scanScheduled = false;
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                const changedNodes = mutation.type === 'characterData'
+                    ? [mutation.target.parentElement]
+                    : Array.from(mutation.addedNodes);
 
-    CategoriesTranslator() {
-        let _this = this;
-        let categoryList = $('.categories-wrapper');
-        
-        if(categoryList.length > 0) {
-            let categoriesLink = $(categoryList).find('a');
-            $.each(categoriesLink, function(key, li) {
-                $.each(_this.translatedWords, function(keyj, translateWord) {
-                    if($(li).text().trim() === translateWord.name_tr) {
-                        $(li).text(translateWord.name_en);
-                    }
-                })
-            });
-
-        }
-    }
-
-    appendTab() {
-        let _this = this;
-        $(document).ready(function () {
-            $("<style>").prop("type", "text/css")
-                .html(`
-                    #mySidePanel {
-                        position: fixed;
-                        top: 0;
-                        right: -350px; /* დამალული */
-                        width: 350px;
-                        height: 100vh;
-                        background: #f8f9fa;
-                        z-index: 999999 !important;
-                        transition: right 0.35s ease-in-out;
-                        padding: 25px;
-                        display: flex;
-                        flex-direction: column;
-                        border-left: 2px solid #f27a1a;
-                        /* box-shadow: -4px 0 12px rgba(0,0,0,0.15); */
-                        font-family: Arial, sans-serif;
-                    }
-                    /* When Active */
-                    #mySidePanel.active {
-                        right: 0;
+                changedNodes.forEach((node) => {
+                    const root = node && node.nodeType === Node.ELEMENT_NODE
+                        ? node
+                        : node && node.parentElement;
+                    if(!root || root.classList.contains('converted-price')) {
+                        return;
                     }
 
-                    /* Title Style */
-                    #mySidePanel strong {
-                        font-size: 18px;
-                        color: #f27a1a;
-                        margin-bottom: 8px;
+                    const hasPendingAncestor = Array.from(pendingRoots).some((pendingRoot) => pendingRoot.contains(root));
+                    if(hasPendingAncestor) {
+                        return;
                     }
-
-                    /* BOG Link Style */
-                    #mySidePanel a {
-                        font-size: 14px;
-                        text-decoration: none;
-                        color: #f27a1a;
-                        font-weight: bold;
-                        padding: 6px 0;
-                    }
-                    #mySidePanel a:hover {
-                        text-decoration: underline;
-                    }
-
-                    /* Input + Button Wrapper */
-                    #mySidePanel div[style] {
-                        padding: 0 !important; /* Remove inline padding */
-                        display: flex;
-                        flex-direction: column;
-                        gap: 10px;
-                    }
-
-                    /* Input */
-                    #mySidePanel input[name="currency"] {
-                        width: 100%;
-                        padding: 10px 12px;
-                        border: 1px solid #ccd6dd;
-                        border-radius: 6px;
-                        outline: none;
-                        font-size: 14px;
-                        background: #f5f9fc;
-                        transition: border-color .2s;
-                    }
-                    #mySidePanel input[name="currency"]:focus {
-                        border-color: #f27a1a;
-                    }
-
-                    /* Button */
-                    #generate-button {
-                        width: 100%;
-                        padding: 10px 12px;
-                        background: #f27a1a;
-                        border: none;
-                        border-radius: 6px;
-                        font-size: 14px;
-                        color: white;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: background .2s, transform .1s;
-                    }
-                    #generate-button:hover {
-                        background: #f27a1a;
-                    }
-                    #generate-button:active {
-                        transform: scale(0.97);
-                    }
-
-                    #myToggleBtn {
-                        position: fixed;
-                        bottom: 20px;
-                        right: 20px;
-                        width: 100px;
-                        height: 55px;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        background: #f27a1a;
-                        color: #fff;
-                        border-radius: 50px;
-                        cursor: pointer;
-                        z-index: 1000000 !important;
-                    }
-                `)
-            .appendTo("head");
-
-            // Create elements
-            $("body").append(`
-                <div id="myToggleBtn">TRY to GEL</div>
-                <div id="mySidePanel">
-                    <strong>Type TRY to GEL (Sell)</strong>
-                    <div style="padding: 15px">
-                        <input name="currency" placeholder="0.000"> <!-- 0.0894 -->
-                        <button id="generate-button">Save</button>
-                    </div>
-                    <a href="https://bankofgeorgia.ge/en/currencies/GEL-to-USD#commercial-rates" target="_blank" style="text-align: right">BOG Rate</a>
-                </div>
-            `);
-
-            // Toggle panel
-            $("#myToggleBtn").on("click", function () {
-                $("#mySidePanel").toggleClass("active");
-            });
-
-            //
-            let currency = $('[name="currency"]').val();
-
-            if(currency.length == 0) {
-                chrome.storage.local.get(["lari_in_lira"]).then((result) => {
-                    $('[name="currency"]').val(result.lari_in_lira);
+                    pendingRoots.forEach((pendingRoot) => {
+                        if(root.contains(pendingRoot)) {
+                            pendingRoots.delete(pendingRoot);
+                        }
+                    });
+                    pendingRoots.add(root);
                 });
+            });
+
+            if(pendingRoots.size === 0 || scanScheduled) {
+                return;
             }
 
-            $('#generate-button').on('click', function() {
-                setCashSell();
-            });
-
-            function setCashSell() {
-                let currency = $('[name="currency"]').val();
-                $('[name="currency"]').val(currency);
-                let value = $('[name="currency"]').val()
-                chrome.storage.local.set({ lari_in_lira: value }).then(() => {
-                    console.log("Value is set");
+            scanScheduled = true;
+            setTimeout(() => {
+                scanScheduled = false;
+                const roots = Array.from(pendingRoots);
+                pendingRoots.clear();
+                roots.forEach((root) => {
+                    if(document.documentElement.contains(root)) {
+                        this.addCurrency(root);
+                    }
                 });
-                //
+            }, 250);
+        });
 
-                // const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-                // const targetUrl = 'https://api.businessonline.ge/api/rates/commercial/try';
-                
-                // fetch(proxyUrl + targetUrl, {
-                //     headers: {
-                //         'Origin': '*',  // Replace with your actual domain
-                //         'X-Requested-With': 'XMLHttpRequest'
-                //     }
-                // })
-                // .then(response => response.json())
-                // .then(data => {
-                //     // console.log('Success:', data);
-                //     $('[name="currency"]').val(data.Sell);
-                //     //
-                //     sendCurrencyToApp();
-                //     let value = $('[name="currency"]').val()
-                //     chrome.storage.local.set({ lari_in_lira: value }).then(() => {
-                //         console.log("Value is set");
-                //     });
-                //     window.close();
-                //     //
-                // })
-                // .catch(error => {
-                //     console.error('Error:', error);
-                // });
-            }
-            //
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            characterData: true
         });
     }
 }

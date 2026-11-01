@@ -1,61 +1,68 @@
+const currencyInput = document.querySelector('[name="currency"]');
+const status = document.querySelector('#status');
+const fetchButton = document.querySelector('#fetch-button');
+const saveButton = document.querySelector('#save-button');
 
-let currency = $('[name="currency"]').val();
-
-if(currency.length == 0) {
-    chrome.storage.local.get(["lari_in_lira"]).then((result) => {
-        $('[name="currency"]').val(result.lari_in_lira);
-        sendCurrencyToApp();
-    });
-}
-
-$('#generate-button').on('click', function() {
-    setCashSell();
+chrome.storage.local.get(['lari_in_lira']).then(({ lari_in_lira }) => {
+    if(lari_in_lira) {
+        currencyInput.value = lari_in_lira;
+    }
+}).catch(error => {
+    status.textContent = `Could not load saved rate: ${error.message}`;
 });
 
-function sendCurrencyToApp() {
-    chrome.tabs.query({active: false, currentWindow: true}, function(tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, {
-            greeting: $('[name="currency"]').val()
-        }, function(response) {
-            // alert(response.farewell);
+fetchButton.addEventListener('click', async () => {
+    fetchButton.disabled = true;
+    status.textContent = 'Fetching rate...';
+    try {
+        const response = await fetch('https://api.businessonline.ge/api/rates/commercial/try');
+        if(!response.ok) {
+            throw new Error(`API request failed (${response.status})`);
+        }
+        const data = await response.json();
+        const sell = Number(data.Sell);
+        if(!Number.isFinite(sell) || sell <= 0) {
+            throw new Error('API returned an invalid Sell rate');
+        }
+        currencyInput.value = data.Sell;
+        status.textContent = 'Rate updated. Save to apply it.';
+    } catch(error) {
+        status.textContent = `Could not fetch rate: ${error.message}`;
+    } finally {
+        fetchButton.disabled = false;
+    }
+});
+
+function notifyActiveTab(rate) {
+    return new Promise(resolve => {
+        chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+            if(!tabs[0] || tabs[0].id === undefined) {
+                resolve();
+                return;
+            }
+            chrome.tabs.sendMessage(tabs[0].id, { greeting: rate }, () => {
+                void chrome.runtime.lastError;
+                resolve();
+            });
         });
     });
 }
 
-function setCashSell() {
-    let currency = $('[name="currency"]').val();
-    $('[name="currency"]').val(currency);
-    sendCurrencyToApp();
-    let value = $('[name="currency"]').val()
-    chrome.storage.local.set({ lari_in_lira: value }).then(() => {
-        console.log("Value is set");
-    });
-    window.close();
-    //
+saveButton.addEventListener('click', async () => {
+    const rate = Number(currencyInput.value);
+    if(!Number.isFinite(rate) || rate <= 0) {
+        status.textContent = 'Fetch a valid rate before saving.';
+        return;
+    }
 
-    // const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-    // const targetUrl = 'https://api.businessonline.ge/api/rates/commercial/try';
-    
-    // fetch(proxyUrl + targetUrl, {
-    //     headers: {
-    //         'Origin': '*',  // Replace with your actual domain
-    //         'X-Requested-With': 'XMLHttpRequest'
-    //     }
-    // })
-    // .then(response => response.json())
-    // .then(data => {
-    //     // console.log('Success:', data);
-    //     $('[name="currency"]').val(data.Sell);
-    //     //
-    //     sendCurrencyToApp();
-    //     let value = $('[name="currency"]').val()
-    //     chrome.storage.local.set({ lari_in_lira: value }).then(() => {
-    //         console.log("Value is set");
-    //     });
-    //     window.close();
-    //     //
-    // })
-    // .catch(error => {
-    //     console.error('Error:', error);
-    // });
-}
+    saveButton.disabled = true;
+    try {
+        const value = String(rate);
+        await chrome.storage.local.set({ lari_in_lira: value });
+        await notifyActiveTab(value);
+        window.close();
+    } catch(error) {
+        status.textContent = `Could not save rate: ${error.message}`;
+        saveButton.disabled = false;
+    }
+});
